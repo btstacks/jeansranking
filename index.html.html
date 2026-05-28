@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Jeans Tribunal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --straight: #1a4fa8;
+    --bi: #9c27b0;
+    --gay: #e91e7a;
+    --ace: #555;
+    --bg: #f5f0e8;
+    --surface: #fff;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: #e0d8cc;
+    --gold: #c9a84c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header {
+    background: var(--text); color: #fff; padding: 1.25rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--gold);
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.05em; color: var(--gold); }
+  nav { display: flex; gap: 0.5rem; }
+  nav button {
+    background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #fff;
+    padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.05em;
+    text-transform: uppercase; transition: all 0.15s;
+  }
+  nav button:hover, nav button.active { background: var(--gold); border-color: var(--gold); color: #1a1a1a; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .vote-container { max-width: 640px; margin: 0 auto; padding: 3rem 1.5rem; }
+  .progress-label {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem;
+    display: flex; justify-content: space-between;
+  }
+  .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 2.5rem; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); transition: width 0.4s ease; }
+
+  .jeans-card {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px;
+    padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden;
+  }
+  .jeans-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #1a4fa8, #9c27b0, #e91e7a, #555);
+  }
+  .jeans-emoji { font-size: 4rem; margin-bottom: 1rem; display: block; }
+  .jeans-tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+  .jeans-desc { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.02em; color: var(--text); line-height: 1.3; }
+
+  .verdict-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; display: block; }
+  .vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .vote-btn {
+    padding: 1.1rem 1rem; border-radius: 10px; border: 2px solid transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600;
+    transition: all 0.18s; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .flag-stripe { display: flex; gap: 2px; margin-bottom: 4px; }
+  .stripe { height: 6px; border-radius: 1px; }
+  .vote-btn .vote-name { font-size: 1rem; font-weight: 600; }
+  .vote-btn .vote-sub { font-size: 0.7rem; font-weight: 400; opacity: 0.75; }
+  .vote-btn.straight { background: #e8f0fd; border-color: #b3c7f0; color: var(--straight); }
+  .vote-btn.straight:hover { background: var(--straight); border-color: var(--straight); color: #fff; transform: translateY(-2px); }
+  .vote-btn.bisexual { background: #f5e8fd; border-color: #dbb3f0; color: var(--bi); }
+  .vote-btn.bisexual:hover { background: var(--bi); border-color: var(--bi); color: #fff; transform: translateY(-2px); }
+  .vote-btn.gay { background: #fde8f2; border-color: #f0b3d4; color: var(--gay); }
+  .vote-btn.gay:hover { background: var(--gay); border-color: var(--gay); color: #fff; transform: translateY(-2px); }
+  .vote-btn.asexual { background: #eee; border-color: #ccc; color: var(--ace); }
+  .vote-btn.asexual:hover { background: var(--ace); border-color: var(--ace); color: #fff; transform: translateY(-2px); }
+  .skip-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 0.6rem 1.5rem; border-radius: 8px; cursor: pointer;
+    font-size: 0.8rem; font-family: 'DM Mono', monospace; letter-spacing: 0.05em;
+    transition: all 0.15s; display: block; margin: 0 auto;
+  }
+  .skip-btn:hover { border-color: var(--muted); color: var(--text); }
+  .completion-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; padding: 3rem 2rem; text-align: center; }
+  .completion-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; color: var(--gold); }
+  .completion-card p { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+  .btn-primary { background: var(--text); color: #fff; border: none; padding: 0.8rem 2rem; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; margin: 0.25rem; transition: all 0.15s; }
+  .btn-primary:hover { background: #333; transform: translateY(-1px); }
+
+  .results-container { max-width: 940px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+  .results-header { margin-bottom: 2rem; }
+  .results-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+  .results-header p { font-size: 0.85rem; color: var(--muted); }
+  .gender-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+  .gender-tab {
+    background: transparent; border: none; padding: 0.6rem 1.25rem; cursor: pointer;
+    font-size: 0.85rem; font-family: 'DM Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+  }
+  .gender-tab:hover { color: var(--text); }
+  .gender-tab.active { color: var(--text); border-bottom-color: var(--gold); font-weight: 600; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .summary-card { border-radius: 10px; padding: 1rem; text-align: center; }
+  .summary-card .s-label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Mono', monospace; margin-bottom: 0.4rem; display: block; }
+  .summary-card .s-top { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.03em; display: block; margin-bottom: 0.2rem; }
+  .summary-card .s-pct { font-size: 0.75rem; font-family: 'DM Mono', monospace; display: block; }
+  .s-straight { background: #e8f0fd; color: var(--straight); }
+  .s-bi { background: #f5e8fd; color: var(--bi); }
+  .s-gay { background: #fde8f2; color: var(--gay); }
+  .s-ace { background: #eee; color: var(--ace); }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .chart-section { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; padding: 1.5rem; }
+  .chart-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+  .chart-sub { font-size: 0.73rem; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 1.2rem; }
+
+  .bar-row { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.55rem; }
+  .bar-label { min-width: 105px; font-size: 0.75rem; color: var(--muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; display: flex; }
+  .bar-segment { height: 100%; }
+  .bar-total { min-width: 36px; font-size: 0.72rem; color: var(--muted); font-family: 'DM Mono', monospace; text-align: right; }
+
+  .table-section { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .table-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-header h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; }
+  .sort-select { font-family: 'DM Mono', monospace; font-size: 0.72rem; padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); cursor: pointer; color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: var(--bg); padding: 0.55rem 1rem; text-align: left; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 0.6rem 1rem; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .badge.straight { background: #e8f0fd; color: var(--straight); }
+  .badge.bisexual { background: #f5e8fd; color: var(--bi); }
+  .badge.gay { background: #fde8f2; color: var(--gay); }
+  .badge.asexual { background: #eee; color: var(--ace); }
+  .badge.tie { background: var(--bg); color: var(--muted); }
+  .mini-bars { display: flex; height: 8px; border-radius: 4px; overflow: hidden; min-width: 80px; }
+  .empty-state { text-align: center; padding: 3rem 2rem; color: var(--muted); }
+  .empty-state h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; color: var(--text); }
+  @media (max-width: 600px) {
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .jeans-desc { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">The Jeans Tribunal</div>
+  <nav>
+    <button class="active" id="nav-vote" onclick="showPage('vote', this)">Vote</button>
+    <button id="nav-results" onclick="showPage('results', this)">Results</button>
+  </nav>
+</header>
+
+<div id="page-vote" class="page active">
+  <div class="vote-container">
+    <div class="progress-label">
+      <span>Session progress</span>
+      <span id="progress-count">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div id="vote-content"></div>
+  </div>
+</div>
+
+<div id="page-results" class="page">
+  <div class="results-container">
+    <div class="results-header">
+      <h2>The Verdicts</h2>
+      <p>Aggregated sexuality vibes by gender expression — based on your votes</p>
+    </div>
+    <div class="gender-tabs">
+      <button class="gender-tab active" id="tab-women" onclick="switchGender('Women', this)">Women</button>
+      <button class="gender-tab" id="tab-men" onclick="switchGender('Men', this)">Men</button>
+      <button class="gender-tab" id="tab-nb" onclick="switchGender('Non-binary', this)">Non-binary</button>
+    </div>
+    <div id="results-content"></div>
+  </div>
+</div>
+
+<script>
+const C = { straight:'#1a4fa8', bisexual:'#9c27b0', gay:'#e91e7a', asexual:'#555' };
+const VERDICTS = ['straight','bisexual','gay','asexual'];
+const COLORS = ['Black','Acid washed','Grey','White','Tan','Dark blue','Medium wash','Light wash','Acid wash'];
+const CUTS = ['Skinny','Straight-leg','Bootcut','Flared','Wide-leg','Mom','High-waisted','Low-rise','Boyfriend','Jeggings','Cropped','Distressed','Tapered'];
+const CUFFED = ['cuffed','uncuffed'];
+const GENDERS = ['a woman','a man','a non-binary person'];
+const GENDER_LABELS = {'a woman':'Women','a man':'Men','a non-binary person':'Non-binary'};
+
+function buildAll() {
+  const out = [];
+  for (const color of COLORS)
+    for (const cut of CUTS)
+      for (const cuff of CUFFED)
+        for (const gender of GENDERS)
+          out.push({color,cut,cuff,gender});
+  return out;
+}
+
+const ALL = buildAll();
+
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [b[i],b[j]] = [b[j],b[i]];
+  }
+  return b;
+}
+
+function key(c) { return `${c.color}|${c.cut}|${c.cuff}|${c.gender}`; }
+
+function loadVotes() {
+  try { return JSON.parse(localStorage.getItem('jeans_tribunal_v1') || '{}'); }
+  catch { return {}; }
+}
+function saveVotes(v) { localStorage.setItem('jeans_tribunal_v1', JSON.stringify(v)); }
+
+let votes = loadVotes();
+let queue = shuffle(ALL);
+let currentGender = 'Women';
+let sessionVoted = 0;
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (id === 'results') renderResults();
+  if (id === 'vote') renderVote();
+}
+
+function renderVote() {
+  const totalVoted = Object.keys(votes).length;
+  const total = ALL.length;
+  document.getElementById('progress-count').textContent = `${sessionVoted} this session`;
+  document.getElementById('progress-fill').style.width = `${Math.min((totalVoted/total)*100,100)}%`;
+  const el = document.getElementById('vote-content');
+
+  if (queue.length === 0) queue = shuffle(ALL);
+  const combo = queue[0];
+  const desc = `${combo.color}, ${combo.cut.toLowerCase()}, ${combo.cuff} jeans worn by ${combo.gender}`;
+
+  el.innerHTML = `
+    <div class="jeans-card">
+      <span class="jeans-emoji">👖</span>
+      <div class="jeans-tag">Pronounce your verdict</div>
+      <div class="jeans-desc">${desc}</div>
+    </div>
+    <span class="verdict-label">What sexuality do these jeans give off?</span>
+    <div class="vote-grid">
+      <button class="vote-btn straight" onclick="castVote('straight')">
+        <div class="flag-stripe">
+          <div class="stripe" style="background:#1a4fa8;width:60px;"></div>
+          <div class="stripe" style="background:#fff;width:60px;border:1px solid #ccc;"></div>
+        </div>
+        <span class="vote-name">Straight</span>
+        <span class="vote-sub">classic denim energy</span>
+      </button>
+      <button class="vote-btn bisexual" onclick="castVote('bisexual')">
+        <div class="flag-stripe">
+          <div class="stripe" style="background:#d60270;width:24px;"></div>
+          <div class="stripe" style="background:#9b4f96;width:12px;"></div>
+          <div class="stripe" style="background:#0038a8;width:24px;"></div>
+        </div>
+        <span class="vote-name">Bisexual</span>
+        <span class="vote-sub">all-inclusive vibes</span>
+      </button>
+      <button class="vote-btn gay" onclick="castVote('gay')">
+        <div class="flag-stripe">
+          <div class="stripe" style="background:#e40303;width:10px;"></div>
+          <div class="stripe" style="background:#ff8c00;width:10px;"></div>
+          <div class="stripe" style="background:#ffed00;width:10px;"></div>
+          <div class="stripe" style="background:#008026;width:10px;"></div>
+          <div class="stripe" style="background:#004dff;width:10px;"></div>
+          <div class="stripe" style="background:#750787;width:10px;"></div>
+        </div>
+        <span class="vote-name">Gay</span>
+        <span class="vote-sub">queer coded fit</span>
+      </button>
+      <button class="vote-btn asexual" onclick="castVote('asexual')">
+        <div class="flag-stripe">
+          <div class="stripe" style="background:#1a1a1a;width:16px;"></div>
+          <div class="stripe" style="background:#808080;width:16px;"></div>
+          <div class="stripe" style="background:#fff;width:16px;border:1px solid #ccc;"></div>
+          <div class="stripe" style="background:#7f007f;width:12px;"></div>
+        </div>
+        <span class="vote-name">Asexual</span>
+        <span class="vote-sub">no vibe detected</span>
+      </button>
+    </div>
+    <button class="skip-btn" onclick="skipCombo()">Skip this one</button>
+  `;
+}
+
+function castVote(verdict) {
+  const combo = queue.shift();
+  const k = key(combo);
+  if (!votes[k]) votes[k] = {combo, straight:0, bisexual:0, gay:0, asexual:0};
+  votes[k][verdict]++;
+  sessionVoted++;
+  saveVotes(votes);
+  renderVote();
+}
+
+function skipCombo() {
+  const combo = queue.shift();
+  queue.push(combo);
+  renderVote();
+}
+
+function pctNum(n, t) { return t === 0 ? 0 : Math.round((n/t)*100); }
+function pctStr(n, t) { return pctNum(n,t) + '%'; }
+
+function switchGender(g, btn) {
+  currentGender = g;
+  document.querySelectorAll('.gender-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderResults();
+}
+
+function topVerdict(v) {
+  const t = v.straight+v.bisexual+v.gay+v.asexual;
+  if (t === 0) return 'tie';
+  let best = null, bestN = -1;
+  for (const vd of VERDICTS) {
+    if (v[vd] > bestN) { bestN = v[vd]; best = vd; }
+    else if (v[vd] === bestN) { best = null; }
+  }
+  return best || 'tie';
+}
+
+function renderResults() {
+  const el = document.getElementById('results-content');
+  const gMap = {'Women':'a woman','Men':'a man','Non-binary':'a non-binary person'};
+  const gKey = gMap[currentGender];
+  const relevant = Object.values(votes).filter(v => v.combo.gender === gKey);
+
+  if (relevant.length === 0) {
+    el.innerHTML = `<div class="empty-state"><h3>No votes yet for ${currentGender}</h3><p>Head to the Vote page and start rendering verdicts!</p></div>`;
+    return;
+  }
+
+  const totals = {straight:0, bisexual:0, gay:0, asexual:0};
+  let grand = 0;
+  const byColor = {}, byCut = {};
+
+  for (const v of relevant) {
+    const t = v.straight+v.bisexual+v.gay+v.asexual;
+    grand += t;
+    const col = v.combo.color, cut = v.combo.cut;
+    if (!byColor[col]) byColor[col] = {straight:0,bisexual:0,gay:0,asexual:0};
+    if (!byCut[cut]) byCut[cut] = {straight:0,bisexual:0,gay:0,asexual:0};
+    for (const vd of VERDICTS) {
+      totals[vd] += v[vd];
+      byColor[col][vd] += v[vd];
+      byCut[cut][vd] += v[vd];
+    }
+  }
+
+  function barRows(dict) {
+    return Object.entries(dict).sort((a,b) => {
+      const ta = VERDICTS.reduce((s,v)=>s+a[1][v],0);
+      const tb = VERDICTS.reduce((s,v)=>s+b[1][v],0);
+      return tb-ta;
+    }).map(([name,obj]) => {
+      const t = VERDICTS.reduce((s,v)=>s+obj[v],0);
+      if (t === 0) return '';
+      return `<div class="bar-row">
+        <span class="bar-label" title="${name}">${name}</span>
+        <div class="bar-track">
+          ${VERDICTS.map(vd => `<div class="bar-segment" style="width:${pctNum(obj[vd],t)}%;background:${C[vd]};"></div>`).join('')}
+        </div>
+        <span class="bar-total">${t}v</span>
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = `
+    <div class="summary-grid">
+      ${['straight','bisexual','gay','asexual'].map((vd,i) => {
+        const labels = ['Straight','Bisexual','Gay','Asexual'];
+        const cls = ['s-straight','s-bi','s-gay','s-ace'];
+        return `<div class="summary-card ${cls[i]}">
+          <span class="s-label">${labels[i]}</span>
+          <span class="s-top">${pctStr(totals[vd],grand)}</span>
+          <span class="s-pct">${totals[vd]} votes</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="legend-row">
+      ${VERDICTS.map(vd => `<span class="legend-item"><span class="legend-dot" style="background:${C[vd]};"></span>${vd.charAt(0).toUpperCase()+vd.slice(1)}</span>`).join('')}
+    </div>
+    <div class="charts-row">
+      <div class="chart-section">
+        <div class="chart-title">By Color</div>
+        <div class="chart-sub">Sexuality distribution per denim color</div>
+        ${barRows(byColor)}
+      </div>
+      <div class="chart-section">
+        <div class="chart-title">By Cut</div>
+        <div class="chart-sub">Sexuality distribution per jean cut</div>
+        ${barRows(byCut)}
+      </div>
+    </div>
+    <div class="table-section">
+      <div class="table-header">
+        <h3>All Verdicts — ${currentGender}</h3>
+        <select class="sort-select" onchange="sortTable(this.value, '${gKey}')">
+          <option value="most-voted">Most voted</option>
+          <option value="name">Name (A-Z)</option>
+          <option value="straight">Straightest</option>
+          <option value="bisexual">Most bisexual</option>
+          <option value="gay">Gayest</option>
+          <option value="asexual">Most asexual</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr>
+            <th>Color</th><th>Cut</th><th>Cuffed?</th><th>Breakdown</th><th>Top verdict</th><th>Votes</th>
+          </tr></thead>
+          <tbody id="results-tbody">${buildRows(relevant,'most-voted')}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function buildRows(rows, sortBy) {
+  const sorted = [...rows].sort((a,b) => {
+    const ta = VERDICTS.reduce((s,v)=>s+a[v],0);
+    const tb = VERDICTS.reduce((s,v)=>s+b[v],0);
+    if (sortBy === 'most-voted') return tb-ta;
+    if (sortBy === 'name') return a.combo.color.localeCompare(b.combo.color);
+    const pa = ta > 0 ? a[sortBy]/ta : 0;
+    const pb = tb > 0 ? b[sortBy]/tb : 0;
+    return pb-pa;
+  });
+  return sorted.map(v => {
+    const t = VERDICTS.reduce((s,vd)=>s+v[vd],0);
+    if (t === 0) return '';
+    const top = topVerdict(v);
+    return `<tr>
+      <td>${v.combo.color}</td>
+      <td>${v.combo.cut}</td>
+      <td>${v.combo.cuff}</td>
+      <td><div class="mini-bars">${VERDICTS.map(vd=>`<div style="width:${pctNum(v[vd],t)}%;background:${C[vd]};"></div>`).join('')}</div></td>
+      <td><span class="badge ${top}">${top}</span></td>
+      <td>${t}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortTable(sortBy, gKey) {
+  const relevant = Object.values(votes).filter(v => v.combo.gender === gKey);
+  document.getElementById('results-tbody').innerHTML = buildRows(relevant, sortBy);
+}
+
+renderVote();
+</script>
+</body>
+</html>
